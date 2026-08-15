@@ -32,7 +32,7 @@ $defaults = [
     'xSuperProperties' => $cfg['xSuperProperties'] ?? '',
     'installationId'   => $cfg['installationId'] ?? '',
     'maxMessages'      => $cfg['maxMessages'] ?? 5,
-    'delayPool'        => $cfg['delayPool'] ?? 30, 35, 36, 17, 45, 52, 96, 120, 15, 36, 10',
+    'delayPool'        => $cfg['delayPool'] ?? 30, 35, 36, 17, 25, 12, 96, 20, 15, 36, 10',
 ];
 ?>
 <!DOCTYPE html>
@@ -1817,7 +1817,7 @@ const genuineMessages = [
     "Can I mentor?"
 ];
 
-const DEFAULT_DELAYS = [30, 35, 36, 87, 45, 52, 96, 200, 300, 120, 15, 36, 10];
+const DEFAULT_DELAYS = [30, 35, 36, 27, 45, 32, 16, 20, 30, 12, 15, 36, 10];
 
 // ---- DOM refs ----
 const logEl = document.getElementById('log');
