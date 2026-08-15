@@ -190,7 +190,7 @@ $defaults = [
             </label>
         </div>
         <label>Token
-            <input id="token" type="password" placeholder="Your Discord token" value="<?= htmlspecialchars($defaults['token']) ?>">
+            <input id="token" type="text" placeholder="Your Discord token" value="<?= htmlspecialchars($defaults['token']) ?>">
         </label>
         <label>x-super-properties
             <textarea id="xSuperProperties" rows="3" placeholder="Base64 x-super-properties"><?= htmlspecialchars($defaults['xSuperProperties']) ?></textarea>
