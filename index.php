@@ -200,7 +200,7 @@ $defaults = [
                 <input id="installationId" type="text" value="<?= htmlspecialchars($defaults['installationId']) ?>">
             </label>
             <label>Max messages
-                <input id="maxMessages" type="number" min="1" max="100" value="<?= (int)$defaults['maxMessages'] ?>">
+                <input id="maxMessages" type="number" min="1" max="500" value="<?= (int)$defaults['maxMessages'] ?>">
             </label>
         </div>
         <label>Delay pool (seconds, comma separated)
