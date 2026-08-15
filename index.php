@@ -62,6 +62,7 @@ $defaults = [
     .pill.waiting { background: #ee7d3d; color: #fff; }
     .pill.done    { background: #57f287; color: #1e1f22; }
     .pill.error   { background: #ed4245; color: #fff; }
+    .pill.stopped { background: #ed4245; color: #fff; }
     
     @keyframes pulse {
         0% { opacity: 1; }
@@ -115,12 +116,32 @@ $defaults = [
     .logline.err   { color: #ed4245; }
     .logline.info  { color: #b5bac1; }
     .logline.wait  { color: #f0b232; }
-    .btn {
-        width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer;
-        font-size: 16px; font-weight: 700; color: #fff; background: #5865f2; transition: .2s;
+    .logline.stop  { color: #ed4245; font-weight: bold; }
+    
+    .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
     }
-    .btn:hover:not(:disabled) { background: #4752c4; }
+    .btn-group .btn {
+        flex: 1;
+    }
+    
+    .btn {
+        padding: 14px; border: none; border-radius: 12px; cursor: pointer;
+        font-size: 16px; font-weight: 700; color: #fff; transition: .2s;
+    }
+    .btn-start { background: #5865f2; }
+    .btn-start:hover:not(:disabled) { background: #4752c4; }
+    
+    .btn-stop { background: #ed4245; }
+    .btn-stop:hover:not(:disabled) { background: #c0353a; }
+    
+    .btn-reset { background: #23a55a; }
+    .btn-reset:hover:not(:disabled) { background: #1a8a47; }
+    
     .btn:disabled { background: #3f4147; cursor: not-allowed; opacity: 0.6; }
+    
     .donebox {
         display: none; margin-top: 16px; text-align: center; background: #101f16;
         border: 1px solid #23a55a; border-radius: 12px; padding: 22px;
@@ -141,6 +162,7 @@ $defaults = [
         .cards { grid-template-columns: 1fr 1fr; }
         .formrow { grid-template-columns: 1fr; }
         body { padding: 12px; }
+        .btn-group { flex-direction: column; }
     }
 </style>
 </head>
@@ -185,7 +207,11 @@ $defaults = [
             <input id="delayPool" type="text" value="<?= htmlspecialchars($defaults['delayPool']) ?>">
         </label>
         <div class="hint">Har message ke beech ka gap is list se randomly choose hota hai.</div>
-        <button class="btn" id="startBtn">▶ Start sending</button>
+        
+        <div class="btn-group">
+            <button class="btn btn-start" id="startBtn">▶ Start sending</button>
+            <button class="btn btn-stop" id="stopBtn" disabled>⏹ Stop</button>
+        </div>
     </div>
 
     <!-- ===== DASHBOARD ===== -->
@@ -202,7 +228,7 @@ $defaults = [
     <div class="donebox" id="doneBox">
         <h2>🎉 All done!</h2>
         <p id="doneText">All messages were sent successfully.</p>
-        <button class="btn" id="againBtn" style="background:#23a55a">⟳ Run again (new random messages)</button>
+        <button class="btn btn-reset" id="againBtn">⟳ Run again (new random messages)</button>
     </div>
 
     <iframe id="frame" style="display:none"></iframe>
@@ -240,7 +266,7 @@ const USERS = [
     "@gochi", "@GodHunter",
 ];
 
-// ---- 500+ Genuine Messages ----
+
 const genuineMessages = [
     "9k members completed ask them for the gift now",
     "hey whats up dude got nothing much just chillin",
@@ -1801,8 +1827,13 @@ const totalEl = document.getElementById('total');
 const delayEl = document.getElementById('delay');
 const barEl = document.getElementById('bar');
 const statusEl = document.getElementById('status');
-const btn = document.getElementById('startBtn');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
 const greetingEl = document.getElementById('greeting');
+
+// ---- Control flags ----
+let isRunning = false;
+let shouldStop = false;
 
 // Live greeting as you type your name
 document.getElementById('name').addEventListener('input', (e) => {
@@ -1814,22 +1845,15 @@ document.getElementById('name').addEventListener('input', (e) => {
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 function buildMessage() {
-    // Randomly decide if we are going to ping/mention a user (less frequently to look natural)
     const mention = (Math.floor(Math.random() * 4) === 0) ? pick(USERS) : '';
-    
     let msg = pick(genuineMessages);
-    
-    // If mentioning someone, naturally prepend their name or a casual greeting to them
     if (mention) {
         const starters = ["hey", "yo", "", "what do you think", "hey"];
         msg = pick(starters) + " " + mention + " " + msg;
     }
-    
-    // Clean up any double spaces and trim
     return msg.replace(/\s+/g, ' ').trim();
 }
 
-// Generate multiple messages
 function buildMessages(count) {
     const messages = [];
     for (let i = 0; i < count; i++) {
@@ -1900,7 +1924,7 @@ function countdown(secs) {
         const t = setInterval(() => {
             left--;
             updateDelay(left);
-            if (left <= 0) { 
+            if (left <= 0 || shouldStop) { 
                 clearInterval(t); 
                 updateDelay(0); 
                 resolve(); 
@@ -1909,7 +1933,7 @@ function countdown(secs) {
     });
 }
 
-// Save form values to the PHP session (so send.php sees them too)
+// Save form values to the PHP session
 async function saveConfig(cfg) {
     const fd = new FormData();
     fd.append('ajax', '1');
@@ -1919,7 +1943,21 @@ async function saveConfig(cfg) {
     if (!j.ok) throw new Error('Config save failed');
 }
 
+// ---- STOP function ----
+function stopSending() {
+    shouldStop = true;
+    isRunning = false;
+    setStatus('⏹ Stopped!', 'stopped');
+    addLog('⏹ <b>STOPPED by user!</b>', 'stop');
+    startBtn.disabled = false;
+    startBtn.textContent = '▶ Start sending';
+    stopBtn.disabled = true;
+}
+
+// ---- MAIN RUN function ----
 async function run() {
+    if (isRunning) return;
+    
     const name = document.getElementById('name').value.trim();
     const channelId = document.getElementById('channelId').value.trim();
     const token = document.getElementById('token').value.trim();
@@ -1932,6 +1970,10 @@ async function run() {
         alert('⚠️ Pehle Channel ID, Token, x-super-properties aur Installation ID bharo!');
         return;
     }
+
+    // Reset stop flag
+    shouldStop = false;
+    isRunning = true;
 
     const cfg = { 
         name, 
@@ -1955,12 +1997,19 @@ async function run() {
     const TOTAL = MESSAGES.length;
     totalEl.textContent = TOTAL;
 
-    btn.disabled = true;
-    btn.textContent = '⏳ Sending...';
+    startBtn.disabled = true;
+    startBtn.textContent = '⏳ Sending...';
+    stopBtn.disabled = false;
     setStatus('Sending...', 'sending');
     addLog('🚀 Run started — ' + TOTAL + ' message(s) to send.', 'info');
     
     for (let i = 0; i < TOTAL; i++) {
+        // Check if STOP was requested
+        if (shouldStop) {
+            addLog('⏹ Sending stopped by user at message #' + (i + 1), 'stop');
+            break;
+        }
+        
         const n = i + 1;
         setStatus('📤 Sending #' + n + ' of ' + TOTAL + '…', 'sending');
         addLog('📤 Opening tab to send: <b>' + MESSAGES[i] + '</b>', 'info');
@@ -1981,24 +2030,45 @@ async function run() {
         updateStats(n, TOTAL);
         addLog(ok ? '✅ Message #' + n + ' sent successfully.' : '⚠️ Message #' + n + ' finished (no response signal).', ok ? 'ok' : 'err');
 
+        // Check stop flag before delay
+        if (shouldStop) {
+            addLog('⏹ Stopping before next message...', 'stop');
+            break;
+        }
+
         if (i < TOTAL - 1) {
             setStatus('⏳ Waiting before #' + (n + 1) + '…', 'waiting');
             await countdown(DELAYS[i]);
         }
     }
     
-    setStatus('✅ All done!', 'done');
-    document.getElementById('doneText').textContent = 'All ' + TOTAL + ' messages were sent successfully.';
-    document.getElementById('doneBox').style.display = 'block';
-    addLog('🎉 ===== ALL ' + TOTAL + ' MESSAGES SENT SUCCESSFULLY =====', 'ok');
-    btn.disabled = false;
-    btn.textContent = '▶ Start sending';
+    isRunning = false;
+    
+    if (shouldStop) {
+        setStatus('⏹ Stopped!', 'stopped');
+        document.getElementById('doneText').textContent = 'Stopped by user after ' + sentEl.textContent + ' messages.';
+        document.getElementById('doneBox').style.display = 'block';
+        addLog('⏹ ===== STOPPED BY USER =====', 'stop');
+    } else {
+        setStatus('✅ All done!', 'done');
+        document.getElementById('doneText').textContent = 'All ' + TOTAL + ' messages were sent successfully.';
+        document.getElementById('doneBox').style.display = 'block';
+        addLog('🎉 ===== ALL ' + TOTAL + ' MESSAGES SENT SUCCESSFULLY =====', 'ok');
+    }
+    
+    startBtn.disabled = false;
+    startBtn.textContent = '▶ Start sending';
+    stopBtn.disabled = true;
 }
 
-btn.addEventListener('click', run);
+// ---- Event Listeners ----
+startBtn.addEventListener('click', run);
+
+stopBtn.addEventListener('click', stopSending);
+
 document.getElementById('againBtn').addEventListener('click', () => location.reload());
 
-// Prefill form from last saved values (localStorage)
+// Prefill form from last saved values
 try {
     const s = JSON.parse(localStorage.getItem('senderConfig') || '{}');
     if (s.name) document.getElementById('name').value = s.name;
