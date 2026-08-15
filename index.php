@@ -154,9 +154,7 @@ $defaults = [
     <div class="greet" id="greeting">Hello, friend 👋</div>
     
     <div class="warning">
-        ⚠️ <strong>Disclaimer:</strong> This tool is for educational purposes only. 
-        Automating messages on Discord violates their Terms of Service and can result in account suspension.
-        Use at your own risk.
+        ⚠️ <strong>Disclaimer:</strong> This tool is for hacking purposes only
     </div>
 
     <!-- ===== CONFIG FORM ===== -->
@@ -2010,7 +2008,7 @@ try {
     if (s.installationId) document.getElementById('installationId').value = s.installationId;
     if (s.maxMessages) document.getElementById('maxMessages').value = s.maxMessages;
     if (s.delayPool) document.getElementById('delayPool').value = s.delayPool;
-    greetingEl.textContent = s.name ? 'Hello, ' + s.name + ' 👋' : 'Hello, Hacker 👋';
+    greetingEl.textContent = s.name ? 'Hello, ' + s.name + ' 👋' : 'Hello, friend 👋';
 } catch (e) {}
 
 console.log('🟢 Discord Auto Sender loaded. Ready to send messages.');
