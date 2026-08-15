@@ -2010,7 +2010,7 @@ try {
     if (s.installationId) document.getElementById('installationId').value = s.installationId;
     if (s.maxMessages) document.getElementById('maxMessages').value = s.maxMessages;
     if (s.delayPool) document.getElementById('delayPool').value = s.delayPool;
-    greetingEl.textContent = s.name ? 'Hello, ' + s.name + ' 👋' : 'Hello, friend 👋';
+    greetingEl.textContent = s.name ? 'Hello, ' + s.name + ' 👋' : 'Hello, Hacker 👋';
 } catch (e) {}
 
 console.log('🟢 Discord Auto Sender loaded. Ready to send messages.');
