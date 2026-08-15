@@ -32,7 +32,7 @@ $defaults = [
     'xSuperProperties' => $cfg['xSuperProperties'] ?? '',
     'installationId'   => $cfg['installationId'] ?? '',
     'maxMessages'      => $cfg['maxMessages'] ?? 5,
-    'delayPool'        => $cfg['delayPool'] ?? 30, 35, 36, 17, 25, 12, 96, 20, 15, 36, 10',
+    'delayPool'        => $cfg['delayPool'] ?? '30, 35, 36, 17, 25, 12, 96, 20, 15, 36, 10',
 ];
 ?>
 <!DOCTYPE html>
