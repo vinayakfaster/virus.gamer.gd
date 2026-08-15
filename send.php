@@ -26,7 +26,7 @@ $url = "https://discord.com/api/v9/channels/{$channelId}/messages";
 // Complete headers - mimicking a real browser
 $headers = [
     'Accept: */*',
-    'Accept-Encoding: gzip, deflate, br',
+    'Accept-Encoding: */*',
     'Accept-Language: en-US,en;q=0.9',
     'Authorization: ' . $token,
     'Content-Type: application/json',
