@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'token'            => trim((string)($_POST['token'] ?? '')),
         'xSuperProperties' => trim((string)($_POST['xSuperProperties'] ?? '')),
         'installationId'   => trim((string)($_POST['installationId'] ?? '')),
-        'maxMessages'      => max(1, (int)($_POST['maxMessages'] ?? 5)),
+        'maxMessages' => max(1, (int)($_POST['maxMessages'] ?? 5)),
         'delayPool'        => trim((string)($_POST['delayPool'] ?? '')),
     ];
     if (!empty($_POST['ajax'])) {
@@ -199,9 +199,9 @@ $defaults = [
             <label>Installation ID
                 <input id="installationId" type="text" value="<?= htmlspecialchars($defaults['installationId']) ?>">
             </label>
-            <label>Max messages
-                <input id="maxMessages" type="number" min="1" max="500" value="<?= (int)$defaults['maxMessages'] ?>">
-            </label>
+           <label>Max messages
+    <input id="maxMessages" type="number" min="1" value="<?= (int)$defaults['maxMessages'] ?>">
+</label>
         </div>
         <label>Delay pool (seconds, comma separated)
             <input id="delayPool" type="text" value="<?= htmlspecialchars($defaults['delayPool']) ?>">
@@ -1963,12 +1963,21 @@ async function run() {
     const token = document.getElementById('token').value.trim();
     const xSuper = document.getElementById('xSuperProperties').value.trim();
     const install = document.getElementById('installationId').value.trim();
-    const max = Math.min(100, Math.max(1, parseInt(document.getElementById('maxMessages').value, 10) || 1));
+    
+    // FIX: No max limit - direct value
+    const max = Math.max(1, parseInt(document.getElementById('maxMessages').value, 10) || 1);
     const pool = parseDelays(document.getElementById('delayPool').value);
 
     if (!channelId || !token || !xSuper || !install) {
         alert('⚠️ Pehle Channel ID, Token, x-super-properties aur Installation ID bharo!');
         return;
+    }
+
+    // Warning for large number
+    if (max > 500) {
+        if (!confirm('⚠️ ' + max + ' messages bhejne mein ' + Math.round(max * 0.5) + ' minutes lag sakte hain. Kya aap sure hain?')) {
+            return;
+        }
     }
 
     // Reset stop flag
